@@ -10,6 +10,10 @@ on:
         description: "Snapshot id (optional)"
         required: false
 
+  repository_dispatch:
+    types: [qa_run]
+
+
 jobs:
   test:
     runs-on: ubuntu-latest
