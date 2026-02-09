@@ -1,0 +1,60 @@
+name: QA - Playwright Visual & Functional
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Override URL to test (optional)"
+        required: false
+      pageId:
+        description: "Snapshot id (optional)"
+        required: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Override pages.json (optional)
+        if: ${{ github.event.inputs.url != '' && github.event.inputs.pageId != '' }}
+        run: |
+          cat > test-data/pages.json << 'EOF'
+          [
+            {
+              "id": "${{ github.event.inputs.pageId }}",
+              "name": "Manual Run",
+              "url": "${{ github.event.inputs.url }}",
+              "type": "landing"
+            }
+          ]
+          EOF
+
+      - name: Run tests
+        run: npm test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+
+      - name: Upload test results (screenshots/diffs)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results
