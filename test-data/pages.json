@@ -1,9 +1,8 @@
-
-    [
-      {
-        "id": "${{ github.event.client_payload.itemId }}",
-        "name": "${{ github.event.client_payload.pageName }}",
-        "url": "${{ github.event.client_payload.url }}",
-        "type": "${{ github.event.client_payload.type }}"
-      }
-    ]
+[
+  {
+    "id": "demo-1",
+    "name": "Demo landing",
+    "url": "https://example.com",
+    "type": "landing"
+  }
+]

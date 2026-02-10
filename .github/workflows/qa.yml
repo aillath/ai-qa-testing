@@ -4,10 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       url:
-        description: "Override URL to test (optional)"
+        description: "Website URL to test"
         required: false
       pageId:
         description: "Snapshot id (optional)"
+        required: false
+      figmaLink:
+        description: "Figma design URL (with ?node-id=...) to compare with website"
         required: false
 
   repository_dispatch:
@@ -32,21 +35,36 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Override pages.json (optional)
-        if: ${{ github.event.inputs.url != '' && github.event.inputs.pageId != '' }}
+      - name: Override pages.json (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.url != ''
         run: |
-          cat > test-data/pages.json << 'EOF'
-          [
-            {
-              "id": "${{ github.event.inputs.pageId }}",
-              "name": "Manual Run",
-              "url": "${{ github.event.inputs.url }}",
-              "type": "landing"
-            }
-          ]
-          EOF
+          node -e "
+          const id = (process.env.PAGE_ID || 'run').replace(/[^a-zA-Z0-9-_]/g, '-').replace(/-+/g, '-');
+          const entry = { id, name: 'Manual Run', url: process.env.URL, type: 'landing' };
+          if (process.env.FIGMA_LINK) entry.figmaLink = process.env.FIGMA_LINK;
+          require('fs').writeFileSync('test-data/pages.json', JSON.stringify([entry], null, 2));
+          "
+          env:
+            URL: ${{ github.event.inputs.url }}
+            PAGE_ID: ${{ github.event.inputs.pageId }}
+            FIGMA_LINK: ${{ github.event.inputs.figmaLink }}
+
+      - name: Override pages.json (repository_dispatch)
+        if: github.event_name == 'repository_dispatch' && github.event.client_payload.url != ''
+        env:
+          CLIENT_PAYLOAD: ${{ toJSON(github.event.client_payload) }}
+        run: |
+          node -e "
+          const p = JSON.parse(process.env.CLIENT_PAYLOAD || '{}');
+          const id = (p.itemId || 'run').replace(/[^a-zA-Z0-9-_]/g, '-').replace(/-+/g, '-');
+          const entry = { id, name: p.pageName || 'Run', url: p.url, type: p.type || 'landing' };
+          if (p.figmaLink) entry.figmaLink = p.figmaLink;
+          require('fs').writeFileSync('test-data/pages.json', JSON.stringify([entry], null, 2));
+          "
 
       - name: Run tests
+        env:
+          FIGMA_ACCESS_TOKEN: ${{ secrets.FIGMA_ACCESS_TOKEN }}
         run: npm test
 
       - name: Upload Playwright report

@@ -1,8 +1,8 @@
 import { Page } from '@playwright/test';
 
 export async function stabilizePage(page: Page) {
-  // Wait DOM + fonts
-  await page.waitForLoadState('networkidle');
+  // Wait DOM + fonts ('load' is reliable; networkidle is deprecated)
+  await page.waitForLoadState('load');
   await page.evaluate(async () => {
     // wait for fonts
     // @ts-ignore

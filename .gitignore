@@ -1,6 +1,5 @@
-cat > .gitignore << 'EOF'
 node_modules
 playwright-report
 test-results
+test-data/figma-baselines
 .DS_Store
-EOF

@@ -13,6 +13,8 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "@playwright/test": "^1.58.2"
+    "@playwright/test": "^1.58.2",
+    "pixelmatch": "^6.0.0",
+    "pngjs": "^7.0.0"
   }
 }
